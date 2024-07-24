@@ -1,7 +1,7 @@
 import json
 import os
 
-file_path = "report.json"
+file_path = "crewai_visualization_report.json"
 
 def clear_report():
   """Clear the report file."""
