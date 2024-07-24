@@ -2,6 +2,7 @@ import os
 from inspect import signature
 from typing import Any, List, Optional, Tuple
 
+from crewai.observability import register_agent
 from langchain.agents.agent import RunnableAgent
 from langchain.agents.tools import BaseTool
 from langchain.agents.tools import tool as LangChainTool
@@ -108,6 +109,15 @@ class Agent(BaseAgent):
     def __init__(__pydantic_self__, **data):
         config = data.pop("config", {})
         super().__init__(**config, **data)
+        register_agent(
+          data["role"],
+          data["goal"],
+          data["backstory"],
+          data["tools"] if "tools" in data else [],
+          data["verbose"] if "verbose" in data else False,
+          data["allow_delegation"] if "allow_delegation" in data else False,
+          data["llm"].model_name if "llm" in data else "default"
+        )
         __pydantic_self__.agent_ops_agent_name = __pydantic_self__.role
 
     @model_validator(mode="after")

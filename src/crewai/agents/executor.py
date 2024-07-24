@@ -1,6 +1,7 @@
 import threading
 import time
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from crewai.observability import register_step
 
 from langchain.agents import AgentExecutor
 from langchain.agents.agent import ExceptionTool
@@ -77,6 +78,16 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
 
                 if self.step_callback:
                     self.step_callback(next_step_output)
+                register_step(
+                  str(self.task.id),
+                  self.task.description,
+                  "Expected Output: " + self.task.expected_output,
+                  self.crew_agent.role,
+                  next_step_output[0][0].log,
+                  next_step_output[0][0].tool,
+                  next_step_output[0][0].tool_input,
+                  next_step_output[0][1]
+                )
 
                 if isinstance(next_step_output, AgentFinish):
                     # Creating long term memory
