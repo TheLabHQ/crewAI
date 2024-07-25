@@ -74,7 +74,17 @@ def register_tool(tool):
     # Truncate the file to the current position in case new data is shorter than old
     f.truncate()
 
-def register_step(task_id, task_input, additional_input, role, thought, action, action_input, observation):
+def register_step(
+        task_id,
+        task_input,
+        additional_input,
+        role,
+        thought,
+        action,
+        action_input,
+        observation,
+        answer
+):
   """Upsert a step into the report file."""
   step = {
         "custom_metrics": {},
@@ -83,7 +93,8 @@ def register_step(task_id, task_input, additional_input, role, thought, action, 
           "thought": thought,
           "action": action,
           "action_input": action_input,
-          "observation": observation
+          "observation": observation,
+          "answer": answer
         }
       }
   task_json = {

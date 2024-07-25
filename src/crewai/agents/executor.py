@@ -104,7 +104,8 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                         next_step_action[0].log,
                         next_step_action[0].tool,
                         next_step_action[0].tool_input,
-                        next_step_action[1]
+                        next_step_action[1],
+                        None
                     )
 
                     # See if tool should return directly
