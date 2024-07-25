@@ -74,27 +74,25 @@ def register_tool(tool):
     # Truncate the file to the current position in case new data is shorter than old
     f.truncate()
 
-def register_step(
+
+def register_answer_step(
         task_id,
         task_input,
         additional_input,
         role,
         thought,
-        action,
-        action_input,
-        observation,
         answer
 ):
-  """Upsert a step into the report file."""
+  """Upsert an answer step into the report file."""
   step = {
         "custom_metrics": {},
         "output": {
           "agent": {"agent_id": role},
           "thought": thought,
-          "action": action,
-          "action_input": action_input,
-          "observation": observation,
-          "answer": answer
+          "type": "answer",
+          "content": {
+            "answer": answer
+          }
         }
       }
   task_json = {
@@ -104,6 +102,43 @@ def register_step(
     "steps": [ step ]
   }
 
+  _register_step(step, task_id, task_json)
+
+def register_toolcall_step(
+        task_id,
+        task_input,
+        additional_input,
+        role,
+        thought,
+        action,
+        action_input,
+        observation,
+):
+  """Upsert a toolcall_step into the report file."""
+  step = {
+        "custom_metrics": {},
+        "output": {
+          "agent": {"agent_id": role},
+          "thought": thought,
+          "type": "tool-call",
+          "content": {
+            "action": action,
+            "action_input": action_input,
+            "observation": observation,
+          }
+        }
+      }
+  task_json = {
+    "task_id": task_id,
+    "input": task_input,
+    "additional_input": additional_input,
+    "steps": [ step ]
+  }
+
+  _register_step(step, task_id, task_json)
+
+
+def _register_step(step, task_id, task_json):
   __initialize_report_if_necessary(file_path)
   with open(file_path, "r+") as f:
     data = json.load(f)
@@ -118,7 +153,6 @@ def register_step(
       task_index = next(i for i, task in enumerate(tasks) if task["task_id"] == task_id)
       task = tasks[task_index]
       task["steps"].append(step)
-
 
     # Move back to the start of the file before writing
     f.seek(0)

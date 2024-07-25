@@ -19,7 +19,7 @@ from crewai.tools.tool_usage import ToolUsage, ToolUsageErrorException
 from crewai.utilities import I18N
 from crewai.utilities.constants import TRAINING_DATA_FILE
 from crewai.utilities.training_handler import CrewTrainingHandler
-from crewai.observability import register_step
+from crewai.observability import register_toolcall_step, register_answer_step
 
 class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
     _i18n: I18N = I18N()
@@ -81,15 +81,12 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                     self.step_callback(next_step_output)
 
                 if isinstance(next_step_output, AgentFinish):
-                    register_step(
+                    register_answer_step(
                         str(self.task.id),
                         self.task.description,
                         "Expected Output: " + self.task.expected_output,
                         self.crew_agent.role,
                         next_step_output.log,
-                        None,
-                        None,
-                        None,
                         next_step_output.return_values["output"]
                     )
 
@@ -108,7 +105,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                 if len(next_step_output) == 1:
                     next_step_action = next_step_output[0]
 
-                    register_step(
+                    register_toolcall_step(
                         str(self.task.id),
                         self.task.description,
                         "Expected Output: " + self.task.expected_output,
@@ -116,8 +113,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                         next_step_action[0].log,
                         next_step_action[0].tool,
                         next_step_action[0].tool_input,
-                        next_step_action[1],
-                        None
+                        next_step_action[1]
                     )
 
                     # See if tool should return directly
