@@ -1,6 +1,6 @@
 import json
 import os
-from utilities import Logger
+from crewai.utilities import Logger
 
 file_path = "crewai_visualization_report.json"
 
