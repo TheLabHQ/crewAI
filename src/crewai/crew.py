@@ -33,7 +33,7 @@ from crewai.utilities.constants import TRAINED_AGENTS_DATA_FILE, TRAINING_DATA_F
 from crewai.utilities.evaluators.task_evaluator import TaskEvaluator
 from crewai.utilities.training_handler import CrewTrainingHandler
 
-from crewai.observability import clear_report
+from crewai.observability import clear_report, register_agent
 
 try:
     import agentops
@@ -323,6 +323,17 @@ class Crew(BaseModel):
         maybe_observability_report_filename = clear_report()
         if maybe_observability_report_filename is not None:
             self._logger.log("info", f"Observability report file cleared: {maybe_observability_report_filename}")
+        for agent in self.agents:
+            register_agent(
+                agent["role"],
+                agent["goal"],
+                agent["backstory"],
+                agent["tools"] if "tools" in agent else [],
+                agent["verbose"] if "verbose" in agent else False,
+                agent["allow_delegation"] if "allow_delegation" in agent else False,
+                agent["llm"].model_name if "llm" in agent else "default"
+            )
+
         self._execution_span = self._telemetry.crew_execution_span(self, inputs)
 
         self._interpolate_inputs(inputs)  # type: ignore # Argument 1 to "_interpolate_inputs" of "Crew" has incompatible type "dict[str, Any] | None"; expected "dict[str, Any]"
