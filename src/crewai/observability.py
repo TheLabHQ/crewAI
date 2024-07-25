@@ -1,14 +1,16 @@
 import json
 import os
+from utilities import Logger
 
 file_path = "crewai_visualization_report.json"
 
 
-def clear_report():
+def clear_report(logger: Logger):
   """Clear the report file."""
   if os.path.exists(file_path):
     with open(file_path, "w") as f:
       json.dump({}, f)
+      logger.log("info", f"Report file {file_path} cleared.")
 
 
 def __initialize_report_if_necessary(current_file_path: str):
