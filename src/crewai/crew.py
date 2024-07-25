@@ -33,7 +33,7 @@ from crewai.utilities.constants import TRAINED_AGENTS_DATA_FILE, TRAINING_DATA_F
 from crewai.utilities.evaluators.task_evaluator import TaskEvaluator
 from crewai.utilities.training_handler import CrewTrainingHandler
 
-from src.crewai.observability import clear_report
+from crewai.observability import clear_report
 
 try:
     import agentops
