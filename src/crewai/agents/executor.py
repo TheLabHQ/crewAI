@@ -81,6 +81,18 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                     self.step_callback(next_step_output)
 
                 if isinstance(next_step_output, AgentFinish):
+                    register_step(
+                        str(self.task.id),
+                        self.task.description,
+                        "Expected Output: " + self.task.expected_output,
+                        self.crew_agent.role,
+                        next_step_output.log,
+                        None,
+                        None,
+                        None,
+                        next_step_output.return_values["output"]
+                    )
+
                     # Creating long term memory
                     create_long_term_memory = threading.Thread(
                         target=self._create_long_term_memory, args=(next_step_output,)
