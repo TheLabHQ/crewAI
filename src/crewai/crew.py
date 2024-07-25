@@ -320,7 +320,9 @@ class Crew(BaseModel):
         inputs: Optional[Dict[str, Any]] = {},
     ) -> Union[str, Dict[str, Any]]:
         """Starts the crew to work on its assigned tasks."""
-        clear_report(_self.logger)
+        maybe_observability_report_filename = clear_report()
+        if maybe_observability_report_filename is not None:
+            self._logger.log("info", f"Observability report file cleared: {maybe_observability_report_filename}")
         self._execution_span = self._telemetry.crew_execution_span(self, inputs)
 
         self._interpolate_inputs(inputs)  # type: ignore # Argument 1 to "_interpolate_inputs" of "Crew" has incompatible type "dict[str, Any] | None"; expected "dict[str, Any]"

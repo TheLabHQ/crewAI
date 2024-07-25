@@ -1,16 +1,17 @@
 import json
 import os
-from crewai.utilities import Logger
+from typing import Union
 
 file_path = "crewai_visualization_report.json"
 
 
-def clear_report(logger: Logger):
-  """Clear the report file."""
+def clear_report() -> Union[str, None]:
+  """Clear the report file and return the name of the report file."""
   if os.path.exists(file_path):
     with open(file_path, "w") as f:
       json.dump({}, f)
-      logger.log("info", f"Report file {file_path} cleared.")
+    return file_path
+  return None
 
 
 def __initialize_report_if_necessary(current_file_path: str):
