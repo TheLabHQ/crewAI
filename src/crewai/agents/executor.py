@@ -79,16 +79,6 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
 
                 if self.step_callback:
                     self.step_callback(next_step_output)
-                register_step(
-                  str(self.task.id),
-                  self.task.description,
-                  "Expected Output: " + self.task.expected_output,
-                  self.crew_agent.role,
-                  next_step_output[0][0].log,
-                  next_step_output[0][0].tool,
-                  next_step_output[0][0].tool_input,
-                  next_step_output[0][1]
-                )
 
                 if isinstance(next_step_output, AgentFinish):
                     # Creating long term memory
@@ -105,6 +95,18 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
 
                 if len(next_step_output) == 1:
                     next_step_action = next_step_output[0]
+
+                    register_step(
+                        str(self.task.id),
+                        self.task.description,
+                        "Expected Output: " + self.task.expected_output,
+                        self.crew_agent.role,
+                        next_step_action[0].log,
+                        next_step_action[0].tool,
+                        next_step_action[0].tool_input,
+                        next_step_action[1]
+                    )
+
                     # See if tool should return directly
                     tool_return = self._get_tool_return(next_step_action)
                     if tool_return is not None:
