@@ -20,8 +20,17 @@ def __initialize_report_if_necessary(current_file_path: str):
     with open(current_file_path, "w") as f:
       json.dump({}, f)
 
-def register_agent(name, goal, backstory, tools, verbose, allow_delegation, llm_model):
+def register_agent(agent):
   """Upsert an agent into the report file."""
+
+  name = agent.role
+  goal = agent.goal
+  backstory = agent.backstory
+  tools = agent.tools
+  verbose = agent.verbose
+  allow_delegation = agent.allow_delegation
+  llm_model = agent.llm.model_name
+
   agent_json = {
     "agent_id": name,
     "name": name,

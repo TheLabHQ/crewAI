@@ -323,16 +323,10 @@ class Crew(BaseModel):
         maybe_observability_report_filename = clear_report()
         if maybe_observability_report_filename is not None:
             self._logger.log("info", f"Observability report file cleared: {maybe_observability_report_filename}")
+        if self.manager_agent is not None:
+            register_agent(self.manager_agent)
         for agent in self.agents:
-            register_agent(
-                agent["role"],
-                agent["goal"],
-                agent["backstory"],
-                agent["tools"] if "tools" in agent else [],
-                agent["verbose"] if "verbose" in agent else False,
-                agent["allow_delegation"] if "allow_delegation" in agent else False,
-                agent["llm"].model_name if "llm" in agent else "default"
-            )
+            register_agent(agent)
 
         self._execution_span = self._telemetry.crew_execution_span(self, inputs)
 
