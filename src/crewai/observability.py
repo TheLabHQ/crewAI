@@ -124,6 +124,13 @@ def register_toolcall_step(
         observation,
 ):
   """Upsert a toolcall_step into the report file."""
+  action_input_dict = action_input
+  if isinstance(action_input, str):
+    try:
+      action_input_dict = json.loads(action_input)
+    except json.JSONDecodeError:
+      pass
+
   step = {
         "custom_metrics": {},
         "output": {
@@ -132,7 +139,7 @@ def register_toolcall_step(
           "type": "tool-call",
           "content": {
             "action": action,
-            "action_input": action_input,
+            "action_input": action_input_dict,
             "observation": observation,
           }
         }
