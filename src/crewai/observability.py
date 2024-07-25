@@ -34,7 +34,7 @@ def register_agent(name, goal, backstory, tools, verbose, allow_delegation, llm_
       "llm_model": llm_model
     }
   }
-  [register_tool(tool) for tool in tools]
+  [_register_tool(tool) for tool in tools]
 
   __initialize_report_if_necessary(file_path)
   with open(file_path, "r+") as f:
@@ -57,7 +57,7 @@ def register_agent(name, goal, backstory, tools, verbose, allow_delegation, llm_
     f.truncate()
 
 
-def register_tool(tool):
+def _register_tool(tool):
   """Upsert tools into the report file."""
 
   __initialize_report_if_necessary(file_path)
