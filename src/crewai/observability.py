@@ -3,7 +3,15 @@ import os
 
 file_path = "crewai_visualization_report.json"
 
-def initialize_report_if_necessary(current_file_path: str):
+
+def clear_report():
+  """Clear the report file."""
+  if os.path.exists(file_path):
+    with open(file_path, "w") as f:
+      json.dump({}, f)
+
+
+def __initialize_report_if_necessary(current_file_path: str):
   """Initialize the report file."""
   if not os.path.exists(current_file_path):
     with open(current_file_path, "w") as f:
@@ -25,7 +33,7 @@ def register_agent(name, goal, backstory, tools, verbose, allow_delegation, llm_
   }
   [register_tool(tool) for tool in tools]
 
-  initialize_report_if_necessary(file_path)
+  __initialize_report_if_necessary(file_path)
   with open(file_path, "r+") as f:
     data = json.load(f)
 
@@ -49,7 +57,7 @@ def register_agent(name, goal, backstory, tools, verbose, allow_delegation, llm_
 def register_tool(tool):
   """Upsert tools into the report file."""
 
-  initialize_report_if_necessary(file_path)
+  __initialize_report_if_necessary(file_path)
   with open(file_path, "r+") as f:
     data = json.load(f)
     if "tools" not in data:
@@ -82,7 +90,7 @@ def register_step(task_id, task_input, additional_input, role, thought, action, 
     "steps": [ step ]
   }
 
-  initialize_report_if_necessary(file_path)
+  __initialize_report_if_necessary(file_path)
   with open(file_path, "r+") as f:
     data = json.load(f)
 

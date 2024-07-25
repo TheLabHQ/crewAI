@@ -1,6 +1,7 @@
 import asyncio
 import json
 import uuid
+import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from langchain_core.callbacks import BaseCallbackHandler
@@ -31,6 +32,8 @@ from crewai.utilities import I18N, FileHandler, Logger, RPMController
 from crewai.utilities.constants import TRAINED_AGENTS_DATA_FILE, TRAINING_DATA_FILE
 from crewai.utilities.evaluators.task_evaluator import TaskEvaluator
 from crewai.utilities.training_handler import CrewTrainingHandler
+
+from src.crewai.observability import clear_report
 
 try:
     import agentops
@@ -317,6 +320,7 @@ class Crew(BaseModel):
         inputs: Optional[Dict[str, Any]] = {},
     ) -> Union[str, Dict[str, Any]]:
         """Starts the crew to work on its assigned tasks."""
+        clear_report()
         self._execution_span = self._telemetry.crew_execution_span(self, inputs)
 
         self._interpolate_inputs(inputs)  # type: ignore # Argument 1 to "_interpolate_inputs" of "Crew" has incompatible type "dict[str, Any] | None"; expected "dict[str, Any]"
@@ -391,6 +395,7 @@ class Crew(BaseModel):
         self, inputs: Optional[Dict[str, Any]] = {}
     ) -> Union[str, Dict]:
         """Asynchronous kickoff method to start the crew execution."""
+        warnings.warn("Warning: The observability feature might not work with async kickoff.", UserWarning)
         return await asyncio.to_thread(self.kickoff, inputs)
 
     async def kickoff_for_each_async(self, inputs: List[Dict]) -> List[Any]:
