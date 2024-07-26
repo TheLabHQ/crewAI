@@ -1,9 +1,10 @@
 import json
 import os
-from typing import Union, Optional
+from dataclasses import dataclass, asdict
+from typing import Union, Optional, List
 
 file_path = "crewai_visualization_report.json"
-
+artifact_directory = "crewai_artifacts"
 
 def clear_report() -> Union[str, None]:
   """Clear the report file and return the name of the report file."""
@@ -137,6 +138,8 @@ def register_toolcall_step(
     except json.JSONDecodeError:
       pass
 
+  artifacts = _collect_artifact_names(step_id)
+
   step = {
         "step_id": step_id,
         "custom_metrics": {},
@@ -148,6 +151,7 @@ def register_toolcall_step(
             "action": action,
             "action_input": action_input_dict,
             "observation": observation,
+            "artifacts": map(lambda artifact: asdict(artifact), artifacts)
           }
         }
       }
@@ -183,3 +187,23 @@ def _register_step(step, task_id, task_json):
     json.dump(data, f, indent=4)
     # Truncate the file to the current position in case new data is shorter than old
     f.truncate()
+
+@dataclass
+class Artifact:
+  artifact_id: str
+  file_name: str
+  relative_path: str
+
+def _collect_artifact_names(step_id: str) -> List[Artifact]:
+  """Parse artifacts from the artifact directory."""
+  artifacts: List[Artifact] = []
+  if os.path.exists(artifact_directory):
+    for artifact_filename in os.listdir(artifact_directory):
+      if artifact_filename.startswith(step_id):
+        artifact = Artifact(
+          artifact_id=artifact_filename,
+          file_name=artifact_filename,
+          relative_path=os.path.join(artifact_directory, artifact_filename)
+        )
+        artifacts.append(artifact)
+  return artifacts
