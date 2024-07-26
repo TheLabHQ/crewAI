@@ -311,15 +311,21 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                 if tool_calling.tool_name.casefold().strip() in [
                     name.casefold().strip() for name in name_to_tool_map
                 ]:
-                    if ((tool_calling.tool_name == "Delegate work to coworker") or
-                            (tool_calling.tool_name == "Ask question to coworker") or
-                            ("ARTIFACT_GENERATOR" in tool_calling.tool_name)): # NOTE by HDC: "ARTIFACT_GENERATOR" is now a magic keyword, breaking all separations of concern like crazy
+                    if (
+                            (tool_calling.tool_name == "Delegate work to coworker") or
+                            (tool_calling.tool_name == "Ask question to coworker")):
+                        tool_calling.arguments.update({"current_step_id": current_step_id})
+                        warnings.warn(
+                            f"Injected the current_step_id into the tool_calling arguments. "
+                            f"tool_name: {tool_calling.tool_name} , arguments: {tool_calling.arguments}"
+                        )
+
+                    if "ARTIFACT_GENERATOR" in tool_calling.tool_name:  # NOTE by HDC: "ARTIFACT_GENERATOR" is now a magic keyword, breaking all separations of concern like crazy
                         tool_calling.arguments.update({"artifact_prefix": current_step_id})
                         warnings.warn(
                             f"Injected the current_step_id as artifact_prefix into the tool_calling arguments. "
                             f"tool_name: {tool_calling.tool_name} , arguments: {tool_calling.arguments}"
                         )
-                    if ("ARTIFACT_GENERATOR" in tool_calling.tool_name):
                         tool_calling.arguments.update({"artifact_directory": artifact_directory})
                         warnings.warn(
                             f"Injected the artifact_directory into the tool_calling arguments. "
