@@ -151,7 +151,7 @@ def register_toolcall_step(
             "action": action,
             "action_input": action_input_dict,
             "observation": observation,
-            "artifacts": map(lambda artifact: asdict(artifact), artifacts)
+            "artifacts": list[map(lambda artifact: asdict(artifact), artifacts)]
           }
         }
       }
