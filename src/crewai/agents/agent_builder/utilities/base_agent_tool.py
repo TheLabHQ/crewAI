@@ -80,4 +80,4 @@ class BaseAgentTools(BaseModel, ABC):
             agent=agent,
             expected_output="Your best answer to your coworker asking you this, accounting for the context shared.",
         )
-        return agent.execute_task(task, context, parent_step_id)  # type: ignore # "str" has no attribute "execute_task"
+        return agent.execute_task(task, context, None, parent_step_id)  # type: ignore # "str" has no attribute "execute_task"
