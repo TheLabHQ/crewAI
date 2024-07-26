@@ -138,7 +138,8 @@ def register_toolcall_step(
     except json.JSONDecodeError:
       pass
 
-  artifacts = _collect_artifact_names(step_id)
+  artifacts = _collect_artifacts(step_id)
+  artifacts_asdict = list(map(lambda artifact: asdict(artifact), artifacts))
 
   step = {
         "step_id": step_id,
@@ -151,7 +152,7 @@ def register_toolcall_step(
             "action": action,
             "action_input": action_input_dict,
             "observation": observation,
-            "artifacts": list(map(lambda artifact: asdict(artifact), artifacts))
+            "artifacts": artifacts_asdict
           }
         }
       }
@@ -160,7 +161,8 @@ def register_toolcall_step(
     "parent_step_id": parent_step_id,
     "input": task_input,
     "additional_input": additional_input,
-    "steps": [ step ]
+    "steps": [ step ],
+    "artifacts": artifacts_asdict
   }
 
   _register_step(step, task_id, task_json)
@@ -181,6 +183,7 @@ def _register_step(step, task_id, task_json):
       task_index = next(i for i, task in enumerate(tasks) if task["task_id"] == task_id)
       task = tasks[task_index]
       task["steps"].append(step)
+      task["artifacts"] = task["artifacts"] + step["artifacts"]
 
     # Move back to the start of the file before writing
     f.seek(0)
@@ -194,7 +197,7 @@ class Artifact:
   file_name: str
   relative_path: str
 
-def _collect_artifact_names(step_id: str) -> List[Artifact]:
+def _collect_artifacts(step_id: str) -> List[Artifact]:
   """Parse artifacts from the artifact directory."""
   artifacts: List[Artifact] = []
   if os.path.exists(artifact_directory):
