@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Union
+from typing import Union, Optional
 
 file_path = "crewai_visualization_report.json"
 
@@ -85,6 +85,8 @@ def _register_tool(tool):
 
 
 def register_answer_step(
+        parent_step_id: Optional[str],
+        step_id: str,
         task_id,
         task_input,
         additional_input,
@@ -94,6 +96,7 @@ def register_answer_step(
 ):
   """Upsert an answer step into the report file."""
   step = {
+        "step_id": step_id,
         "custom_metrics": {},
         "output": {
           "agent": {"agent_id": role},
@@ -106,6 +109,7 @@ def register_answer_step(
       }
   task_json = {
     "task_id": task_id,
+    "parent_step_id": parent_step_id,
     "input": task_input,
     "additional_input": additional_input,
     "steps": [ step ]
@@ -114,6 +118,8 @@ def register_answer_step(
   _register_step(step, task_id, task_json)
 
 def register_toolcall_step(
+        parent_step_id: Optional[str],
+        step_id: str,
         task_id,
         task_input,
         additional_input,
@@ -132,6 +138,7 @@ def register_toolcall_step(
       pass
 
   step = {
+        "step_id": step_id,
         "custom_metrics": {},
         "output": {
           "agent": {"agent_id": role},
@@ -146,6 +153,7 @@ def register_toolcall_step(
       }
   task_json = {
     "task_id": task_id,
+    "parent_step_id": parent_step_id,
     "input": task_input,
     "additional_input": additional_input,
     "steps": [ step ]

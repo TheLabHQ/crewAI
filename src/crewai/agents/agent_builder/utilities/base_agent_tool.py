@@ -27,20 +27,20 @@ class BaseAgentTools(BaseModel, ABC):
         return coworker
 
     def delegate_work(
-        self, task: str, context: str, coworker: Optional[str] = None, **kwargs
+        self, task: str, context: str, coworker: Optional[str] = None, current_step_id: Optional[str] = None, **kwargs
     ):
-        """Useful to delegate a specific task to a coworker passing all necessary context and names."""
+        """Useful to delegate a specific task to a coworker passing all necessary context and names. The current_step_id can be set to None.""" # NOTE by HDC: In the tool-description, I allow the current_step_id to be set to None, since it's secretly injected by the framework later.
         coworker = self._get_coworker(coworker, **kwargs)
-        return self._execute(coworker, task, context)
+        return self._execute(coworker, task, context, current_step_id)
 
     def ask_question(
-        self, question: str, context: str, coworker: Optional[str] = None, **kwargs
+        self, question: str, context: str, coworker: Optional[str] = None, current_step_id: Optional[str] = None, **kwargs
     ):
-        """Useful to ask a question, opinion or take from a coworker passing all necessary context and names."""
+        """Useful to ask a question, opinion or take from a coworker passing all necessary context and names. The current_step_id can be set to None.""" # NOTE by HDC: In the tool-description, I allow the current_step_id to be set to None, since it's secretly injected by the framework later.
         coworker = self._get_coworker(coworker, **kwargs)
-        return self._execute(coworker, question, context)
+        return self._execute(coworker, question, context, current_step_id)
 
-    def _execute(self, agent: Union[str, None], task: str, context: Union[str, None]):
+    def _execute(self, agent: Union[str, None], task: str, context: Union[str, None], parent_step_id: Optional[str] = None):
         """Execute the command."""
         try:
             if agent is None:
@@ -80,4 +80,4 @@ class BaseAgentTools(BaseModel, ABC):
             agent=agent,
             expected_output="Your best answer to your coworker asking you this, accounting for the context shared.",
         )
-        return agent.execute_task(task, context)  # type: ignore # "str" has no attribute "execute_task"
+        return agent.execute_task(task, context, parent_step_id)  # type: ignore # "str" has no attribute "execute_task"

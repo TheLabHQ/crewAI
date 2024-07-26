@@ -168,6 +168,7 @@ class BaseAgent(ABC, BaseModel):
         task: Any,
         context: Optional[str] = None,
         tools: Optional[List[Any]] = None,
+        parent_step_id: Optional[str] = None
     ) -> str:
         pass
 

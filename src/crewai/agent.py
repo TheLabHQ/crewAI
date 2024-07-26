@@ -136,6 +136,7 @@ class Agent(BaseAgent):
         task: Any,
         context: Optional[str] = None,
         tools: Optional[List[Any]] = None,
+        current_step_id: Optional[str] = None
     ) -> str:
         """Execute a task with the agent.
 
@@ -143,6 +144,7 @@ class Agent(BaseAgent):
             task: Task to execute.
             context: Context to execute the task in.
             tools: Tools to use for the task.
+            current_step_id: If existent, id of the current step
 
         Returns:
             Output of the agent
@@ -176,6 +178,7 @@ class Agent(BaseAgent):
 
         self.agent_executor.tools_description = render_text_description(parsed_tools)
         self.agent_executor.tools_names = self.__tools_names(parsed_tools)
+        self.agent_executor.parent_step_id = current_step_id
 
         if self.crew and self.crew._train:
             task_prompt = self._training_handler(task_prompt=task_prompt)

@@ -1,9 +1,11 @@
 import threading
 import time
+import uuid
+import warnings
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from langchain.agents import AgentExecutor
-from langchain.agents.agent import ExceptionTool
+from langchain.agents.agent import ExceptionTool, NextStepOutput
 from langchain.callbacks.manager import CallbackManagerForChainRun
 from langchain_core.agents import AgentAction, AgentFinish, AgentStep
 from langchain_core.exceptions import OutputParserException
@@ -42,6 +44,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
     system_template: Optional[str] = None
     prompt_template: Optional[str] = None
     response_template: Optional[str] = None
+    parent_step_id: Optional[str] = None
 
     def _call(
         self,
@@ -69,12 +72,14 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
         # We now enter the agent loop (until it returns something).
         while self._should_continue(self.iterations, time_elapsed):
             if not self.request_within_rpm_limit or self.request_within_rpm_limit():
+                current_step_id = str(uuid.uuid4())
                 next_step_output = self._take_next_step(
                     name_to_tool_map,
                     color_mapping,
                     inputs,
                     intermediate_steps,
                     run_manager=run_manager,
+                    current_step_id=current_step_id,
                 )
 
                 if self.step_callback:
@@ -82,6 +87,8 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
 
                 if isinstance(next_step_output, AgentFinish):
                     register_answer_step(
+                        str(self.parent_step_id),
+                        str(current_step_id),
                         str(self.task.id),
                         self.task.description,
                         "Expected Output: " + self.task.expected_output,
@@ -106,6 +113,8 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                     next_step_action = next_step_output[0]
 
                     register_toolcall_step(
+                        str(self.parent_step_id),
+                        str(current_step_id),
                         str(self.task.id),
                         self.task.description,
                         "Expected Output: " + self.task.expected_output,
@@ -131,6 +140,40 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
 
         return self._return(output, intermediate_steps, run_manager=run_manager)
 
+    def _take_next_step(
+            self,
+            name_to_tool_map: Dict[str, BaseTool],
+            color_mapping: Dict[str, str],
+            inputs: Dict[str, str],
+            intermediate_steps: List[Tuple[AgentAction, str]],
+            run_manager: Optional[CallbackManagerForChainRun] = None,
+            current_step_id: Optional[str] = None,
+    ) -> Union[AgentFinish, List[Tuple[AgentAction, str]]]:
+        return self._consume_next_step(
+            [
+                a
+                for a in self._iter_next_step(
+                name_to_tool_map,
+                color_mapping,
+                inputs,
+                intermediate_steps,
+                run_manager,
+                current_step_id
+            )
+            ]
+        )
+
+    def _consume_next_step(
+            self, values: NextStepOutput
+    ) -> Union[AgentFinish, List[Tuple[AgentAction, str]]]:
+        if isinstance(values[-1], AgentFinish):
+            assert len(values) == 1
+            return values[-1]
+        else:
+            return [
+                (a.action, a.observation) for a in values if isinstance(a, AgentStep)
+            ]
+
     def _iter_next_step(
         self,
         name_to_tool_map: Dict[str, BaseTool],
@@ -138,6 +181,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
         inputs: Dict[str, str],
         intermediate_steps: List[Tuple[AgentAction, str]],
         run_manager: Optional[CallbackManagerForChainRun] = None,
+        current_step_id: Optional[str] = None,
     ) -> Iterator[Union[AgentFinish, AgentAction, AgentStep]]:
         """Take a single step in the thought-action-observation loop.
 
@@ -259,6 +303,9 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                 action=agent_action,
             )
             tool_calling = tool_usage.parse(agent_action.log)
+            if (tool_calling.tool_name == "Delegate work to coworker") or (tool_calling.tool_name == "Ask question to coworker"):
+                warnings.warn("Injecting the parent_step_id into the tool_calling arguments")
+                tool_calling.arguments.update({"current_step_id": current_step_id})
 
             if isinstance(tool_calling, ToolUsageErrorException):
                 observation = tool_calling.message
