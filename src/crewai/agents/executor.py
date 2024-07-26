@@ -311,7 +311,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                     name.casefold().strip() for name in name_to_tool_map
                 ]:
                     if (tool_calling.tool_name == "Delegate work to coworker") or (tool_calling.tool_name == "Ask question to coworker"):
-                        warnings.warn("Injecting the parent_step_id into the tool_calling arguments")
+                        warnings.warn("Injecting the current_step_id into the tool_calling arguments")
                         tool_calling.arguments.update({"current_step_id": current_step_id})
 
                     observation = tool_usage.use(tool_calling, agent_action.log)
