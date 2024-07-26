@@ -303,9 +303,6 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                 action=agent_action,
             )
             tool_calling = tool_usage.parse(agent_action.log)
-            if (tool_calling.tool_name == "Delegate work to coworker") or (tool_calling.tool_name == "Ask question to coworker"):
-                warnings.warn("Injecting the parent_step_id into the tool_calling arguments")
-                tool_calling.arguments.update({"current_step_id": current_step_id})
 
             if isinstance(tool_calling, ToolUsageErrorException):
                 observation = tool_calling.message
@@ -313,6 +310,10 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                 if tool_calling.tool_name.casefold().strip() in [
                     name.casefold().strip() for name in name_to_tool_map
                 ]:
+                    if (tool_calling.tool_name == "Delegate work to coworker") or (tool_calling.tool_name == "Ask question to coworker"):
+                        warnings.warn("Injecting the parent_step_id into the tool_calling arguments")
+                        tool_calling.arguments.update({"current_step_id": current_step_id})
+
                     observation = tool_usage.use(tool_calling, agent_action.log)
                 else:
                     observation = self._i18n.errors("wrong_tool_name").format(
