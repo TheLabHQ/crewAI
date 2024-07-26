@@ -310,9 +310,14 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                 if tool_calling.tool_name.casefold().strip() in [
                     name.casefold().strip() for name in name_to_tool_map
                 ]:
-                    if (tool_calling.tool_name == "Delegate work to coworker") or (tool_calling.tool_name == "Ask question to coworker"):
-                        warnings.warn("Injecting the current_step_id into the tool_calling arguments")
+                    if ((tool_calling.tool_name == "Delegate work to coworker") or
+                            (tool_calling.tool_name == "Ask question to coworker") or
+                            ("ARTIFACT_GENERATOR" in tool_calling.tool_name)): # NOTE by HDC: "ARTIFACT_GENERATOR" is now a magic keyword, breaking all separations of concern like crazy
                         tool_calling.arguments.update({"current_step_id": current_step_id})
+                        warnings.warn(
+                            f"Injected the current_step_id into the tool_calling arguments. "
+                            "tool_name: {tool_calling.tool_name} , arguments: {tool_calling.arguments}"
+                        )
 
                     observation = tool_usage.use(tool_calling, agent_action.log)
                 else:
