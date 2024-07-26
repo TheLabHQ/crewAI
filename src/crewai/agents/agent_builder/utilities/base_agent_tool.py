@@ -40,7 +40,7 @@ class BaseAgentTools(BaseModel, ABC):
         coworker = self._get_coworker(coworker, **kwargs)
         return self._execute(coworker, question, context, current_step_id)
 
-    def _execute(self, agent: Union[str, None], task: str, context: Union[str, None], parent_step_id: Optional[str] = None):
+    def _execute(self, agent: Union[str, None], task: str, context: Union[str, None], current_step_id: Optional[str] = None):
         """Execute the command."""
         try:
             if agent is None:
@@ -80,4 +80,4 @@ class BaseAgentTools(BaseModel, ABC):
             agent=agent,
             expected_output="Your best answer to your coworker asking you this, accounting for the context shared.",
         )
-        return agent.execute_task(task, context, None, parent_step_id)  # type: ignore # "str" has no attribute "execute_task"
+        return agent.execute_task(task, context, None, current_step_id)  # type: ignore # "str" has no attribute "execute_task"
