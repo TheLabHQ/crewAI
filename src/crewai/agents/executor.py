@@ -87,7 +87,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
 
                 if isinstance(next_step_output, AgentFinish):
                     register_answer_step(
-                        str(self.parent_step_id),
+                        self.parent_step_id,
                         str(current_step_id),
                         str(self.task.id),
                         self.task.description,
@@ -113,7 +113,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                     next_step_action = next_step_output[0]
 
                     register_toolcall_step(
-                        str(self.parent_step_id),
+                        self.parent_step_id,
                         str(current_step_id),
                         str(self.task.id),
                         self.task.description,
