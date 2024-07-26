@@ -21,7 +21,8 @@ from crewai.tools.tool_usage import ToolUsage, ToolUsageErrorException
 from crewai.utilities import I18N
 from crewai.utilities.constants import TRAINING_DATA_FILE
 from crewai.utilities.training_handler import CrewTrainingHandler
-from crewai.observability import register_toolcall_step, register_answer_step
+from crewai.observability import register_toolcall_step, register_answer_step, artifact_directory
+
 
 class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
     _i18n: I18N = I18N()
@@ -316,7 +317,13 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                         tool_calling.arguments.update({"current_step_id": current_step_id})
                         warnings.warn(
                             f"Injected the current_step_id into the tool_calling arguments. "
-                            "tool_name: {tool_calling.tool_name} , arguments: {tool_calling.arguments}"
+                            f"tool_name: {tool_calling.tool_name} , arguments: {tool_calling.arguments}"
+                        )
+                    if ("ARTIFACT_GENERATOR" in tool_calling.tool_name):
+                        tool_calling.arguments.update({"artifact_directory": artifact_directory})
+                        warnings.warn(
+                            f"Injected the artifact_directory into the tool_calling arguments. "
+                            f"tool_name: {tool_calling.tool_name} , arguments: {tool_calling.arguments}"
                         )
 
                     observation = tool_usage.use(tool_calling, agent_action.log)
