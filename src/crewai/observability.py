@@ -113,7 +113,8 @@ def register_answer_step(
     "parent_step_id": parent_step_id,
     "input": task_input,
     "additional_input": additional_input,
-    "steps": [ step ]
+    "steps": [ step ],
+    "artifacts": []
   }
 
   _register_step(step, task_id, task_json)
@@ -183,7 +184,13 @@ def _register_step(step, task_id, task_json):
       task_index = next(i for i, task in enumerate(tasks) if task["task_id"] == task_id)
       task = tasks[task_index]
       task["steps"].append(step)
-      task["artifacts"] = task["artifacts"] + step["artifacts"]
+
+      accumulated_artifacts = []
+      for step in task["steps"]:
+        if step["output"]["type"] == "tool-call":
+          step_artifacts = step["output"]["content"]["artifacts"]
+          accumulated_artifacts = accumulated_artifacts + step_artifacts
+      task["artifacts"] = accumulated_artifacts
 
     # Move back to the start of the file before writing
     f.seek(0)
