@@ -14,6 +14,14 @@ def clear_report() -> Union[str, None]:
     return file_path
   return None
 
+def clear_artifacts() -> Union[str, None]:
+  """Clear the artifact directory and return the name of the directory."""
+  if os.path.exists(artifact_directory):
+    for artifact_filename in os.listdir(artifact_directory):
+      os.remove(os.path.join(artifact_directory, artifact_filename))
+    return artifact_directory
+  return None
+
 
 def __initialize_report_if_necessary(current_file_path: str):
   """Initialize the report file."""

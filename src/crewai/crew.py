@@ -33,7 +33,7 @@ from crewai.utilities.constants import TRAINED_AGENTS_DATA_FILE, TRAINING_DATA_F
 from crewai.utilities.evaluators.task_evaluator import TaskEvaluator
 from crewai.utilities.training_handler import CrewTrainingHandler
 
-from crewai.observability import clear_report, register_agent
+from crewai.observability import clear_report, clear_artifacts, register_agent
 
 try:
     import agentops
@@ -320,6 +320,10 @@ class Crew(BaseModel):
         inputs: Optional[Dict[str, Any]] = {},
     ) -> Union[str, Dict[str, Any]]:
         """Starts the crew to work on its assigned tasks."""
+        maybe_cleared_artifacts_directory = clear_artifacts()
+        if maybe_cleared_artifacts_directory is not None:
+            self._logger.log("info", f"Artifacts directory cleared: {maybe_cleared_artifacts_directory}")
+
         maybe_observability_report_filename = clear_report()
         if maybe_observability_report_filename is not None:
             self._logger.log("info", f"Observability report file cleared: {maybe_observability_report_filename}")
