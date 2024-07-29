@@ -96,7 +96,7 @@ def register_answer_step(
         answer
 ):
   """Upsert an answer step into the report file."""
-  step = {
+  step_json = {
         "step_id": step_id,
         "custom_metrics": {},
         "output": {
@@ -113,11 +113,11 @@ def register_answer_step(
     "parent_step_id": parent_step_id,
     "input": task_input,
     "additional_input": additional_input,
-    "steps": [ step ],
+    "steps": [ step_json ],
     "artifacts": []
   }
 
-  _register_step(step, task_id, task_json)
+  _register_step(step_json, step_id, task_id, task_json)
 
 def register_toolcall_step(
         parent_step_id: Optional[str],
@@ -142,7 +142,7 @@ def register_toolcall_step(
   artifacts = _collect_artifacts(step_id)
   artifacts_asdict = list(map(lambda artifact: asdict(artifact), artifacts))
 
-  step = {
+  step_json = {
         "step_id": step_id,
         "custom_metrics": {},
         "output": {
@@ -162,14 +162,14 @@ def register_toolcall_step(
     "parent_step_id": parent_step_id,
     "input": task_input,
     "additional_input": additional_input,
-    "steps": [ step ],
+    "steps": [ step_json ],
     "artifacts": artifacts_asdict
   }
 
-  _register_step(step, task_id, task_json)
+  _register_step(step_json, step_id, task_id, task_json)
 
 
-def _register_step(step, task_id, task_json):
+def _register_step(step_json, step_id, task_id, task_json):
   __initialize_report_if_necessary(file_path)
   with open(file_path, "r+") as f:
     data = json.load(f)
@@ -180,15 +180,21 @@ def _register_step(step, task_id, task_json):
     if not any(task["task_id"] == task_id for task in tasks):
       tasks.append(task_json)
     else:
-      # Step needs to be appended to task
       task_index = next(i for i, task in enumerate(tasks) if task["task_id"] == task_id)
       task = tasks[task_index]
-      task["steps"].append(step)
+
+      if any(step_dict["step_id"] == step_id for step_dict in task["steps"]):
+        # Step needs to be overwritten
+        step_index = next(i for i, step_dict in enumerate(task["steps"]) if step_dict["step_id"] == step_json["step_id"])
+        task["steps"][step_index] = step_json
+      else:
+        # Step needs to be appended
+        task["steps"].append(step_json)
 
       accumulated_artifacts = []
-      for step in task["steps"]:
-        if step["output"]["type"] == "tool-call":
-          step_artifacts = step["output"]["content"]["artifacts"]
+      for step_dict in task["steps"]:
+        if step_dict["output"]["type"] == "tool-call":
+          step_artifacts = step_dict["output"]["content"]["artifacts"]
           accumulated_artifacts = accumulated_artifacts + step_artifacts
       task["artifacts"] = accumulated_artifacts
 

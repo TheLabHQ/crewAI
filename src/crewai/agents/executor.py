@@ -282,6 +282,20 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                 yield output
                 return
 
+        if isinstance(output, AgentAction):
+            register_toolcall_step(
+                self.parent_step_id,
+                str(current_step_id),
+                str(self.task.id),
+                self.task.description,
+                "Expected Output: " + self.task.expected_output,
+                self.crew_agent.role,
+                output.log,
+                output.tool,
+                output.tool_input,
+                None
+            )
+
         self._create_short_term_memory(output)
 
         actions: List[AgentAction]
