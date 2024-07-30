@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 from dataclasses import dataclass, asdict
@@ -7,13 +8,23 @@ report_directory = "crewai_visualization_reports"
 report_filename_base = "crewai_visualization_report"
 artifact_directory = "crewai_artifacts"
 
+def __get_full_report_file_path() -> str:
+  return os.path.join(report_directory, report_filename_base + "_full.json")
+
+def __get_incremented_step_report_file_path() -> str:
+  if not os.path.exists(report_directory):
+    raise Exception(f"report directory {report_directory} does not exist")
+  replay_path_base = os.path.join(report_directory, report_filename_base + "_replay")
+  replay_report_paths = glob.glob(replay_path_base + "*")
+  return replay_path_base + "__step_" +  str(len(replay_report_paths)).zfill(6) + ".json"
+
 def clear_report() -> Union[str, None]:
   """Clear the report directory, initialize reports and return the name of the report directory."""
   if os.path.exists(report_directory):
     for report_filename in os.listdir(report_directory):
       os.remove(os.path.join(report_directory, report_filename))
 
-    with open(os.path.join(report_directory, report_filename_base + "_full.json"), "w") as f:
+    with open(__get_full_report_file_path(), "w") as f:
       json.dump({}, f)
     with open(os.path.join(report_directory, report_filename_base + "_replay_0.json"), "w") as f:
       json.dump({}, f)
@@ -72,7 +83,7 @@ def register_agent(agent):
       agent_index = next(i for i, agent in enumerate(agents) if agent["name"] == name)
       agents[agent_index] = agent_json
 
-  current_step_report_file_path = __get_current_step_report_file_path()
+  current_step_report_file_path = __get_incremented_step_report_file_path()
   for file_path in [full_report_file_path, current_step_report_file_path]:
     with open(file_path, "w") as f:
       json.dump(data, f, indent=4)
@@ -91,7 +102,7 @@ def _register_tool(tool):
     if not any(t["name"] == tool.name for t in tools):
       tools.append({"tool_id": tool.name, "name": tool.name, "description": tool.description})
 
-  current_step_report_file_path = __get_current_step_report_file_path()
+  current_step_report_file_path = __get_incremented_step_report_file_path()
   for file_path in [full_report_file_path, current_step_report_file_path]:
     with open(file_path, "w") as f:
       json.dump(data, f, indent=4)
@@ -210,7 +221,7 @@ def _register_step(step_json, step_id, task_id, task_json):
           accumulated_artifacts = accumulated_artifacts + step_artifacts
       task["artifacts"] = accumulated_artifacts
 
-  current_step_report_file_path = __get_current_step_report_file_path()
+  current_step_report_file_path = __get_incremented_step_report_file_path()
   for file_path in [full_report_file_path, current_step_report_file_path]:
     with open(file_path, "w") as f:
       json.dump(data, f, indent=4)
