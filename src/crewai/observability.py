@@ -3,15 +3,24 @@ import os
 from dataclasses import dataclass, asdict
 from typing import Union, Optional, List
 
-file_path = "crewai_visualization_report.json"
+report_directory = "crewai_visualization_reports"
+report_filename_base = "crewai_visualization_report"
 artifact_directory = "crewai_artifacts"
 
 def clear_report() -> Union[str, None]:
-  """Clear the report file and return the name of the report file."""
-  if os.path.exists(file_path):
-    with open(file_path, "w") as f:
+  """Clear the report directory, initialize reports and return the name of the report directory."""
+  if os.path.exists(report_directory):
+    for report_filename in os.listdir(report_directory):
+      os.remove(os.path.join(report_directory, report_filename))
+
+    with open(os.path.join(report_directory, report_filename_base + "_full.json"), "w") as f:
       json.dump({}, f)
-    return file_path
+    with open(os.path.join(report_directory, report_filename_base + "_replay_0.json"), "w") as f:
+      json.dump({}, f)
+
+    return report_directory
+  else:
+    os.mkdir(report_directory)
   return None
 
 def clear_artifacts() -> Union[str, None]:
@@ -22,12 +31,6 @@ def clear_artifacts() -> Union[str, None]:
     return artifact_directory
   return None
 
-
-def __initialize_report_if_necessary(current_file_path: str):
-  """Initialize the report file."""
-  if not os.path.exists(current_file_path):
-    with open(current_file_path, "w") as f:
-      json.dump({}, f)
 
 def register_agent(agent):
   """Upsert an agent into the report file."""
@@ -54,8 +57,9 @@ def register_agent(agent):
   }
   [_register_tool(tool) for tool in tools]
 
-  __initialize_report_if_necessary(file_path)
-  with open(file_path, "r+") as f:
+  full_report_file_path = __get_full_report_file_path()
+
+  with open(full_report_file_path, "r") as f:
     data = json.load(f)
 
     if "agents" not in data:
@@ -68,30 +72,29 @@ def register_agent(agent):
       agent_index = next(i for i, agent in enumerate(agents) if agent["name"] == name)
       agents[agent_index] = agent_json
 
-    # Move back to the start of the file before writing
-    f.seek(0)
-    json.dump(data, f, indent=4)
-    # Truncate the file to the current position in case new data is shorter than old
-    f.truncate()
+  current_step_report_file_path = __get_current_step_report_file_path()
+  for file_path in [full_report_file_path, current_step_report_file_path]:
+    with open(file_path, "w") as f:
+      json.dump(data, f, indent=4)
+
 
 
 def _register_tool(tool):
   """Upsert tools into the report file."""
 
-  __initialize_report_if_necessary(file_path)
-  with open(file_path, "r+") as f:
+  full_report_file_path = __get_full_report_file_path()
+  with open(full_report_file_path, "r") as f:
     data = json.load(f)
     if "tools" not in data:
       data["tools"] = []
     tools = data["tools"]
     if not any(t["name"] == tool.name for t in tools):
       tools.append({"tool_id": tool.name, "name": tool.name, "description": tool.description})
-    # Move back to the start of the file before writing
-    f.seek(0)
-    json.dump(data, f, indent=4)
-    # Truncate the file to the current position in case new data is shorter than old
-    f.truncate()
 
+  current_step_report_file_path = __get_current_step_report_file_path()
+  for file_path in [full_report_file_path, current_step_report_file_path]:
+    with open(file_path, "w") as f:
+      json.dump(data, f, indent=4)
 
 def register_answer_step(
         parent_step_id: Optional[str],
@@ -178,8 +181,9 @@ def register_toolcall_step(
 
 
 def _register_step(step_json, step_id, task_id, task_json):
-  __initialize_report_if_necessary(file_path)
-  with open(file_path, "r+") as f:
+
+  full_report_file_path = __get_full_report_file_path()
+  with open(full_report_file_path, "r") as f:
     data = json.load(f)
 
     if "workflow" not in data:
@@ -206,11 +210,10 @@ def _register_step(step_json, step_id, task_id, task_json):
           accumulated_artifacts = accumulated_artifacts + step_artifacts
       task["artifacts"] = accumulated_artifacts
 
-    # Move back to the start of the file before writing
-    f.seek(0)
-    json.dump(data, f, indent=4)
-    # Truncate the file to the current position in case new data is shorter than old
-    f.truncate()
+  current_step_report_file_path = __get_current_step_report_file_path()
+  for file_path in [full_report_file_path, current_step_report_file_path]:
+    with open(file_path, "w") as f:
+      json.dump(data, f, indent=4)
 
 @dataclass
 class Artifact:
