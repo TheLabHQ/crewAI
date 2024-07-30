@@ -324,9 +324,9 @@ class Crew(BaseModel):
         if maybe_cleared_artifacts_directory is not None:
             self._logger.log("info", f"Artifacts directory cleared: {maybe_cleared_artifacts_directory}")
 
-        maybe_observability_report_filename = clear_report()
-        if maybe_observability_report_filename is not None:
-            self._logger.log("info", f"Observability report file cleared: {maybe_observability_report_filename}")
+        observability_report_directory = clear_report()
+        self._logger.log("info", f"Observability report file cleared: {observability_report_directory}")
+
         if self.manager_agent is not None:
             register_agent(self.manager_agent)
         for agent in self.agents:

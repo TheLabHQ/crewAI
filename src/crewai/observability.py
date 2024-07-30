@@ -18,21 +18,20 @@ def __get_incremented_step_report_file_path() -> str:
   replay_report_paths = glob.glob(replay_path_base + "*")
   return replay_path_base + "__step_" +  str(len(replay_report_paths)).zfill(6) + ".json"
 
-def clear_report() -> Union[str, None]:
+def clear_report() -> str:
   """Clear the report directory, initialize reports and return the name of the report directory."""
   if os.path.exists(report_directory):
     for report_filename in os.listdir(report_directory):
       os.remove(os.path.join(report_directory, report_filename))
-
-    with open(__get_full_report_file_path(), "w") as f:
-      json.dump({}, f)
-    with open(os.path.join(report_directory, report_filename_base + "_replay_0.json"), "w") as f:
-      json.dump({}, f)
-
-    return report_directory
   else:
     os.mkdir(report_directory)
-  return None
+
+  with open(__get_full_report_file_path(), "w") as f:
+    json.dump({}, f)
+  with open(__get_incremented_step_report_file_path(), "w") as f:
+    json.dump({}, f)
+
+  return report_directory
 
 def clear_artifacts() -> Union[str, None]:
   """Clear the artifact directory and return the name of the directory."""
