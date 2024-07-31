@@ -8,15 +8,18 @@ report_directory = "crewai_visualization_reports"
 report_filename_base = "crewai_visualization_report"
 artifact_directory = "crewai_artifacts"
 
+
 def __get_full_report_file_path() -> str:
   return os.path.join(report_directory, report_filename_base + "_full.json")
+
 
 def __get_incremented_step_report_file_path() -> str:
   if not os.path.exists(report_directory):
     raise Exception(f"report directory {report_directory} does not exist")
   replay_path_base = os.path.join(report_directory, report_filename_base + "_replay")
   replay_report_paths = glob.glob(replay_path_base + "*")
-  return replay_path_base + "__step_" +  str(len(replay_report_paths)).zfill(6) + ".json"
+  return replay_path_base + "__step_" + str(len(replay_report_paths)).zfill(6) + ".json"
+
 
 def clear_report() -> str:
   """Clear the report directory, initialize reports and return the name of the report directory."""
@@ -32,6 +35,7 @@ def clear_report() -> str:
     json.dump({}, f)
 
   return report_directory
+
 
 def clear_artifacts() -> Union[str, None]:
   """Clear the artifact directory and return the name of the directory."""
@@ -88,7 +92,6 @@ def register_agent(agent):
       json.dump(data, f, indent=4)
 
 
-
 def _register_tool(tool):
   """Upsert tools into the report file."""
 
@@ -106,51 +109,53 @@ def _register_tool(tool):
     with open(file_path, "w") as f:
       json.dump(data, f, indent=4)
 
+
 def register_answer_step(
-        parent_step_id: Optional[str],
-        step_id: str,
-        task_id,
-        task_input,
-        additional_input,
-        role,
-        thought,
-        answer
+  parent_step_id: Optional[str],
+  step_id: str,
+  task_id,
+  task_input,
+  additional_input,
+  role,
+  thought,
+  answer
 ):
   """Upsert an answer step into the report file."""
   step_json = {
-        "step_id": step_id,
-        "custom_metrics": {},
-        "output": {
-          "agent": {"agent_id": role},
-          "thought": thought,
-          "type": "answer",
-          "content": {
-            "answer": answer
-          }
-        }
+    "step_id": step_id,
+    "custom_metrics": {},
+    "output": {
+      "agent": {"agent_id": role},
+      "thought": thought,
+      "type": "answer",
+      "content": {
+        "answer": answer
       }
+    }
+  }
   task_json = {
     "task_id": task_id,
     "parent_step_id": parent_step_id,
     "input": task_input,
     "additional_input": additional_input,
-    "steps": [ step_json ],
+    "steps": [step_json],
     "artifacts": []
   }
 
   _register_step(step_json, step_id, task_id, task_json)
 
+
 def register_toolcall_step(
-        parent_step_id: Optional[str],
-        step_id: str,
-        task_id,
-        task_input,
-        additional_input,
-        role,
-        thought,
-        action,
-        action_input,
-        observation,
+  parent_step_id: Optional[str],
+  step_id: str,
+  task_id,
+  task_input,
+  additional_input,
+  role,
+  thought,
+  action,
+  action_input,
+  observation,
 ):
   """Upsert a toolcall_step into the report file."""
   action_input_dict = action_input
@@ -164,26 +169,26 @@ def register_toolcall_step(
   artifacts_asdict = list(map(lambda artifact: asdict(artifact), artifacts))
 
   step_json = {
-        "step_id": step_id,
-        "custom_metrics": {},
-        "output": {
-          "agent": {"agent_id": role},
-          "thought": thought,
-          "type": "tool-call",
-          "content": {
-            "action": action,
-            "action_input": action_input_dict,
-            "observation": observation,
-            "artifacts": artifacts_asdict
-          }
-        }
+    "step_id": step_id,
+    "custom_metrics": {},
+    "output": {
+      "agent": {"agent_id": role},
+      "thought": thought,
+      "type": "tool-call",
+      "content": {
+        "action": action,
+        "action_input": action_input_dict,
+        "observation": observation,
+        "artifacts": artifacts_asdict
       }
+    }
+  }
   task_json = {
     "task_id": task_id,
     "parent_step_id": parent_step_id,
     "input": task_input,
     "additional_input": additional_input,
-    "steps": [ step_json ],
+    "steps": [step_json],
     "artifacts": artifacts_asdict
   }
 
@@ -191,7 +196,6 @@ def register_toolcall_step(
 
 
 def _register_step(step_json, step_id, task_id, task_json):
-
   full_report_file_path = __get_full_report_file_path()
   with open(full_report_file_path, "r") as f:
     data = json.load(f)
@@ -207,7 +211,8 @@ def _register_step(step_json, step_id, task_id, task_json):
 
       if any(step_dict["step_id"] == step_id for step_dict in task["steps"]):
         # Step needs to be overwritten
-        step_index = next(i for i, step_dict in enumerate(task["steps"]) if step_dict["step_id"] == step_json["step_id"])
+        step_index = next(
+          i for i, step_dict in enumerate(task["steps"]) if step_dict["step_id"] == step_json["step_id"])
         task["steps"][step_index] = step_json
       else:
         # Step needs to be appended
@@ -225,11 +230,13 @@ def _register_step(step_json, step_id, task_id, task_json):
     with open(file_path, "w") as f:
       json.dump(data, f, indent=4)
 
+
 @dataclass
 class Artifact:
   artifact_id: str
   file_name: str
   relative_path: str
+
 
 def _collect_artifacts(step_id: str) -> List[Artifact]:
   """Parse artifacts from the artifact directory."""
