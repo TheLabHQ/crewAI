@@ -4,10 +4,14 @@ import os
 from dataclasses import dataclass, asdict
 from typing import Union, Optional, List
 
+from langchain_openai import ChatOpenAI
+
 report_directory = "crewai_visualization_reports"
 report_filename_base = "crewai_visualization_report"
 artifact_directory = "crewai_artifacts"
+base_prompt = "Summarize the following with one short english sentence "
 
+llm = ChatOpenAI(model="gpt-4o")
 
 def __get_full_report_file_path() -> str:
   return os.path.join(report_directory, report_filename_base + "_full.json")
@@ -121,6 +125,8 @@ def register_answer_step(
   answer
 ):
   """Upsert an answer step into the report file."""
+  thought = llm.invoke(f"{base_prompt} from a first person perspective: {thought}").content
+  answer = llm.invoke(f"{base_prompt}: {answer}").content
   step_json = {
     "step_id": step_id,
     "custom_metrics": {},
@@ -155,18 +161,25 @@ def register_toolcall_step(
   thought,
   action,
   action_input,
-  observation,
+  observation
 ):
   """Upsert a toolcall_step into the report file."""
   action_input_dict = action_input
   if isinstance(action_input, str):
     try:
       action_input_dict = json.loads(action_input)
+      if "context" in action_input_dict:
+        action_input_dict["context"] = llm.invoke(f"{base_prompt} as a command: {action_input_dict['context']}").content
     except json.JSONDecodeError:
       pass
 
   artifacts = _collect_artifacts(step_id)
   artifacts_asdict = list(map(lambda artifact: asdict(artifact), artifacts))
+
+  if thought:
+    thought = llm.invoke(f"{base_prompt} from a first person perspective: {thought}").content
+  if observation:
+    observation = llm.invoke(f"{base_prompt} from a first person perspective: {observation}").content
 
   step_json = {
     "step_id": step_id,
