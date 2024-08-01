@@ -125,8 +125,8 @@ def register_answer_step(
   answer
 ):
   """Upsert an answer step into the report file."""
-  thought = llm.invoke(f"{base_prompt} from a first person perspective: {thought}").content
-  answer = llm.invoke(f"{base_prompt}: {answer}").content
+  thought = llm.invoke(f"{base_prompt} from a first person perspective: \n\n{thought}").content
+  answer = llm.invoke(f"{base_prompt}: \n\n{answer}").content
   step_json = {
     "step_id": step_id,
     "custom_metrics": {},
@@ -169,7 +169,7 @@ def register_toolcall_step(
     try:
       action_input_dict = json.loads(action_input)
       if "context" in action_input_dict:
-        action_input_dict["context"] = llm.invoke(f"{base_prompt} as a command: {action_input_dict['context']}").content
+        action_input_dict["context"] = llm.invoke(f"{base_prompt} as a command: \n\n{action_input_dict['context']}").content
     except json.JSONDecodeError:
       pass
 
@@ -177,9 +177,14 @@ def register_toolcall_step(
   artifacts_asdict = list(map(lambda artifact: asdict(artifact), artifacts))
 
   if thought:
-    thought = llm.invoke(f"{base_prompt} from a first person perspective: {thought}").content
+    thought = llm.invoke(f"{base_prompt} from a first person perspective: \n\n{thought}").content
   if observation:
-    observation = llm.invoke(f"{base_prompt} from a first person perspective: {observation}").content
+    observation = llm.invoke(
+      f"You are an agent and you have run the function '{action}' "
+      f"with the arguments '{json.dumps(action_input_dict)}' .\n\n"
+      f"What follows is the result of the function call. "
+      f"{base_prompt} from a first person perspective: \n\n{observation}"
+    ).content
 
   step_json = {
     "step_id": step_id,
