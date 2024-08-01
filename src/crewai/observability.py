@@ -139,15 +139,7 @@ def register_answer_step(
       }
     }
   }
-  task_json = {
-    "task_id": task_id,
-    "parent_step_id": parent_step_id,
-    "input": task_input,
-    "additional_input": additional_input,
-    "steps": [step_json],
-    "artifacts": []
-  }
-
+  task_json = generate_task_json(additional_input, [], parent_step_id, step_json, task_id, task_input)
   _register_step(step_json, step_id, task_id, task_json)
 
 
@@ -201,16 +193,21 @@ def register_toolcall_step(
       }
     }
   }
+  task_json = generate_task_json(additional_input, artifacts_asdict, parent_step_id, step_json, task_id, task_input)
+  _register_step(step_json, step_id, task_id, task_json)
+
+
+def generate_task_json(additional_input, artifacts_asdict, parent_step_id, step_json, task_id, task_input):
+  task_input = llm.invoke(f"{base_prompt}: \n\n{task_input}").content
   task_json = {
     "task_id": task_id,
     "parent_step_id": parent_step_id,
     "input": task_input,
     "additional_input": additional_input,
     "steps": [step_json],
-    "artifacts": artifacts_asdict
+    "artifacts": artifacts_asdict if artifacts_asdict else []
   }
-
-  _register_step(step_json, step_id, task_id, task_json)
+  return task_json
 
 
 def _register_step(step_json, step_id, task_id, task_json):
