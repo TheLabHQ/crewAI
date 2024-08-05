@@ -73,6 +73,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
         # We now enter the agent loop (until it returns something).
         while self._should_continue(self.iterations, time_elapsed):
             if not self.request_within_rpm_limit or self.request_within_rpm_limit():
+                step_start_time_seconds_since_epoch = int(time.time())
                 current_step_id = str(uuid.uuid4())
                 next_step_output = self._take_next_step(
                     name_to_tool_map,
@@ -81,6 +82,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                     intermediate_steps,
                     run_manager=run_manager,
                     current_step_id=current_step_id,
+                    current_step_start_time_seconds_since_epoch = step_start_time_seconds_since_epoch,
                 )
 
                 if self.step_callback:
@@ -88,6 +90,8 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
 
                 if isinstance(next_step_output, AgentFinish):
                     register_answer_step(
+                        step_start_time_seconds_since_epoch,
+                        int(time.time()),
                         self.parent_step_id,
                         str(current_step_id),
                         str(self.task.id),
@@ -114,6 +118,8 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                     next_step_action = next_step_output[0]
 
                     register_toolcall_step(
+                        step_start_time_seconds_since_epoch,
+                        int(time.time()),
                         self.parent_step_id,
                         str(current_step_id),
                         str(self.task.id),
@@ -149,6 +155,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
             intermediate_steps: List[Tuple[AgentAction, str]],
             run_manager: Optional[CallbackManagerForChainRun] = None,
             current_step_id: Optional[str] = None,
+            current_step_start_time_seconds_since_epoch: Optional[int] = None,
     ) -> Union[AgentFinish, List[Tuple[AgentAction, str]]]:
         return self._consume_next_step(
             [
@@ -159,7 +166,8 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
                 inputs,
                 intermediate_steps,
                 run_manager,
-                current_step_id
+                current_step_id,
+                current_step_start_time_seconds_since_epoch,
             )
             ]
         )
@@ -183,6 +191,7 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
         intermediate_steps: List[Tuple[AgentAction, str]],
         run_manager: Optional[CallbackManagerForChainRun] = None,
         current_step_id: Optional[str] = None,
+        current_step_start_time_seconds_since_epoch: Optional[int] = None,
     ) -> Iterator[Union[AgentFinish, AgentAction, AgentStep]]:
         """Take a single step in the thought-action-observation loop.
 
@@ -284,6 +293,8 @@ class CrewAgentExecutor(AgentExecutor, CrewAgentExecutorMixin):
 
         if isinstance(output, AgentAction):
             register_toolcall_step(
+                current_step_start_time_seconds_since_epoch,
+                None,
                 self.parent_step_id,
                 str(current_step_id),
                 str(self.task.id),

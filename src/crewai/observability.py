@@ -115,6 +115,8 @@ def _register_tool(tool):
 
 
 def register_answer_step(
+  start_time_seconds_since_epoch: Optional[int],
+  end_time_seconds_since_epoch: Optional[int],
   parent_step_id: Optional[str],
   step_id: str,
   task_id,
@@ -127,9 +129,21 @@ def register_answer_step(
   """Upsert an answer step into the report file."""
   thought = llm.invoke(f"{base_prompt} from a first person perspective: \n\n{thought}").content
   answer = llm.invoke(f"{base_prompt}: \n\n{answer}").content
+
+  custom_metrics = None
+  if start_time_seconds_since_epoch is not None:
+    custom_metrics = {
+      "start_ts": int(start_time_seconds_since_epoch * 1000),
+    }
+  if start_time_seconds_since_epoch is not None and end_time_seconds_since_epoch is not None:
+    custom_metrics = {
+      "start_ts": int(start_time_seconds_since_epoch * 1000),
+      "end_ts": int(end_time_seconds_since_epoch * 1000)
+    }
+
   step_json = {
     "step_id": step_id,
-    "custom_metrics": {},
+    "custom_metrics": custom_metrics,
     "output": {
       "agent": {"agent_id": role},
       "thought": thought,
@@ -144,6 +158,8 @@ def register_answer_step(
 
 
 def register_toolcall_step(
+  start_time_seconds_since_epoch: Optional[int],
+  end_time_seconds_since_epoch: Optional[int],
   parent_step_id: Optional[str],
   step_id: str,
   task_id,
@@ -178,9 +194,20 @@ def register_toolcall_step(
       f"{base_prompt} from a first person perspective: \n\n{observation}"
     ).content
 
+  custom_metrics = None
+  if start_time_seconds_since_epoch is not None:
+    custom_metrics = {
+      "start_ts": int(start_time_seconds_since_epoch * 1000),
+    }
+  if start_time_seconds_since_epoch is not None and end_time_seconds_since_epoch is not None:
+    custom_metrics = {
+      "start_ts": int(start_time_seconds_since_epoch * 1000),
+      "end_ts": int(end_time_seconds_since_epoch * 1000)
+    }
+
   step_json = {
     "step_id": step_id,
-    "custom_metrics": {},
+    "custom_metrics": custom_metrics,
     "output": {
       "agent": {"agent_id": role},
       "thought": thought,
