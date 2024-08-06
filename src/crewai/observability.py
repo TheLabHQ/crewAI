@@ -3,7 +3,7 @@ import json
 import os
 from dataclasses import dataclass, asdict
 from typing import Union, Optional, List
-from observability_config import observability_config
+from crewai.observability_config import observability_config
 
 from langchain_openai import ChatOpenAI
 
