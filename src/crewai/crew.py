@@ -316,17 +316,23 @@ class Crew(BaseModel):
                 agent_id=str(agent.role), trained_data=result.model_dump()
             )
 
+    def kickoff_highlevel(
+            self,
+            observability_report_directory: str,
+            observability_artifact_directory: str,
+    ) -> Union[str, Dict[str, Any]]:
+        observability_config.report_directory = observability_report_directory
+        self._logger.log("info", f"Observability report directory set: {observability_config.report_directory}")
+        observability_config.artifact_directory = observability_artifact_directory
+        self._logger.log("info", f"Observability artifacts directory set: {observability_config.artifact_directory}")
+
+        return self.kickoff()
+
     def kickoff(
         self,
         inputs: Optional[Dict[str, Any]] = {},
     ) -> Union[str, Dict[str, Any]]:
         """Starts the crew to work on its assigned tasks."""
-        if inputs.get("observability_report_directory"):
-            observability_config.report_directory = inputs["observability_report_directory"]
-            self._logger.log("info", f"Observability report directory set: {observability_config.report_directory}")
-        if inputs.get("observability_artifacts_directory"):
-            observability_config.artifact_directory = inputs["observability_artifact_directory"]
-            self._logger.log("info", f"Observability artifacts directory set: {observability_config.artifact_directory}")
 
         maybe_cleared_artifacts_directory = clear_artifacts()
         if maybe_cleared_artifacts_directory is not None:
