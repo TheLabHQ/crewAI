@@ -3,50 +3,49 @@ import json
 import os
 from dataclasses import dataclass, asdict
 from typing import Union, Optional, List
+from observability_config import observability_config
 
 from langchain_openai import ChatOpenAI
 
-report_directory = "crewai_visualization_reports"
 report_filename_base = "crewai_visualization_report"
-artifact_directory = "crewai_artifacts"
 base_prompt = "Summarize the following with one short english sentence "
 
 llm = ChatOpenAI(model="gpt-4o")
 
 def __get_full_report_file_path() -> str:
-  return os.path.join(report_directory, report_filename_base + "_full.json")
+  return os.path.join(observability_config.report_directory, report_filename_base + "_full.json")
 
 
 def __get_incremented_step_report_file_path() -> str:
-  if not os.path.exists(report_directory):
-    raise Exception(f"report directory {report_directory} does not exist")
-  replay_path_base = os.path.join(report_directory, report_filename_base + "_replay")
+  if not os.path.exists(observability_config.report_directory):
+    raise Exception(f"report directory {observability_config.report_directory} does not exist")
+  replay_path_base = os.path.join(observability_config.report_directory, report_filename_base + "_replay")
   replay_report_paths = glob.glob(replay_path_base + "*")
   return replay_path_base + "__step_" + str(len(replay_report_paths)).zfill(6) + ".json"
 
 
 def clear_report() -> str:
   """Clear the report directory, initialize reports and return the name of the report directory."""
-  if os.path.exists(report_directory):
-    for report_filename in os.listdir(report_directory):
-      os.remove(os.path.join(report_directory, report_filename))
+  if os.path.exists(observability_config.report_directory):
+    for report_filename in os.listdir(observability_config.report_directory):
+      os.remove(os.path.join(observability_config.report_directory, report_filename))
   else:
-    os.mkdir(report_directory)
+    os.mkdir(observability_config.report_directory)
 
   with open(__get_full_report_file_path(), "w") as f:
     json.dump({}, f)
   with open(__get_incremented_step_report_file_path(), "w") as f:
     json.dump({}, f)
 
-  return report_directory
+  return observability_config.report_directory
 
 
 def clear_artifacts() -> Union[str, None]:
   """Clear the artifact directory and return the name of the directory."""
-  if os.path.exists(artifact_directory):
-    for artifact_filename in os.listdir(artifact_directory):
-      os.remove(os.path.join(artifact_directory, artifact_filename))
-    return artifact_directory
+  if os.path.exists(observability_config.artifact_directory):
+    for artifact_filename in os.listdir(observability_config.artifact_directory):
+      os.remove(os.path.join(observability_config.artifact_directory, artifact_filename))
+    return observability_config.artifact_directory
   return None
 
 
@@ -283,13 +282,13 @@ class Artifact:
 def _collect_artifacts(step_id: str) -> List[Artifact]:
   """Parse artifacts from the artifact directory."""
   artifacts: List[Artifact] = []
-  if os.path.exists(artifact_directory):
-    for artifact_filename in os.listdir(artifact_directory):
+  if os.path.exists(observability_config.artifact_directory):
+    for artifact_filename in os.listdir(observability_config.artifact_directory):
       if artifact_filename.startswith(step_id):
         artifact = Artifact(
           artifact_id=artifact_filename,
           file_name=artifact_filename,
-          relative_path=os.path.join(artifact_directory, artifact_filename)
+          relative_path=os.path.join(observability_config.artifact_directory, artifact_filename)
         )
         artifacts.append(artifact)
   return artifacts
