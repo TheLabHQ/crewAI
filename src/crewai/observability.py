@@ -126,8 +126,8 @@ def register_answer_step(
   answer
 ):
   """Upsert an answer step into the report file."""
-  thought = llm.invoke(f"{base_prompt} from a first person perspective: \n\n{thought}").content
-  answer = llm.invoke(f"{base_prompt}: \n\n{answer}").content
+  thought_summarized = llm.invoke(f"{base_prompt} from a first person perspective: \n\n{thought}").content
+  answer_summarized = llm.invoke(f"{base_prompt}: \n\n{answer}").content
 
   custom_metrics = None
   if start_time_seconds_since_epoch is not None:
@@ -145,10 +145,12 @@ def register_answer_step(
     "custom_metrics": custom_metrics,
     "output": {
       "agent": {"agent_id": role},
-      "thought": thought,
+      "thought": thought_summarized,
+      "thought_full": thought,
       "type": "answer",
       "content": {
-        "answer": answer
+        "answer": answer_summarized,
+        "answer_full": answer,
       }
     }
   }
@@ -176,6 +178,7 @@ def register_toolcall_step(
     try:
       action_input_dict = json.loads(action_input)
       if "context" in action_input_dict:
+        action_input_dict["context_full"] = action_input_dict['context']
         action_input_dict["context"] = llm.invoke(f"{base_prompt} as a command: \n\n{action_input_dict['context']}").content
     except json.JSONDecodeError:
       pass
@@ -184,14 +187,19 @@ def register_toolcall_step(
   artifacts_asdict = list(map(lambda artifact: asdict(artifact), artifacts))
 
   if thought:
-    thought = llm.invoke(f"{base_prompt} from a first person perspective: \n\n{thought}").content
+    thought_summarized = llm.invoke(f"{base_prompt} from a first person perspective: \n\n{thought}").content
+  else:
+    thought_summarized = None
+
   if observation:
-    observation = llm.invoke(
+    observation_summarized = llm.invoke(
       f"You are an agent and you have run the function '{action}' "
       f"with the arguments '{json.dumps(action_input_dict)}' .\n\n"
       f"What follows is the result of the function call. "
       f"{base_prompt} from a first person perspective: \n\n{observation}"
     ).content
+  else:
+    observation_summarized = None
 
   custom_metrics = None
   if start_time_seconds_since_epoch is not None:
@@ -209,12 +217,14 @@ def register_toolcall_step(
     "custom_metrics": custom_metrics,
     "output": {
       "agent": {"agent_id": role},
-      "thought": thought,
+      "thought": thought_summarized,
+      "thought_full": thought,
       "type": "tool-call",
       "content": {
         "action": action,
         "action_input": action_input_dict,
-        "observation": observation,
+        "observation": observation_summarized,
+        "observation_full": observation,
         "artifacts": artifacts_asdict
       }
     }
@@ -224,11 +234,12 @@ def register_toolcall_step(
 
 
 def generate_task_json(additional_input, artifacts_asdict, parent_step_id, step_json, task_id, task_input):
-  task_input = llm.invoke(f"{base_prompt}: \n\n{task_input}").content
+  task_input_summarized = llm.invoke(f"{base_prompt}: \n\n{task_input}").content
   task_json = {
     "task_id": task_id,
     "parent_step_id": parent_step_id,
-    "input": task_input,
+    "input": task_input_summarized,
+    "input_full": task_input,
     "additional_input": additional_input,
     "steps": [step_json],
     "artifacts": artifacts_asdict if artifacts_asdict else []
